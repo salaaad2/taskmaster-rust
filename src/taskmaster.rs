@@ -4,47 +4,26 @@ use std::{self, fs};
 use serde_yml;
 use serde::Deserialize;
 
+use crate::process::Process;
+
 pub struct Taskmaster
 {
     processes: Processes,
-    config_file: String,
-    is_ok: bool
-}
+    pub is_ok: bool,
 
-#[derive(Deserialize, Debug)]
-struct Processes
-{
-    #[serde(rename = "taskmaster-processes")]
-    taskmaster_processes: HashMap<String, Process>
-}
-
-impl Default for Processes
-{
-fn default() -> Self
-{
-    Processes 
-    {
-        taskmaster_processes: HashMap::new(),
-    }
-}
-}
-
-#[derive(Deserialize, Debug)]
-struct Process
-{
-    name: String,
-    full_path: String,
-    start_command: Vec<String>,
-    expected_return: Vec<i32>,
-    redirect_streams: bool,
-    output_redirect_path: String,
-    should_restart: i32,
-    number_of_restarts: i32,
-    exec_on_startup: bool,
+    #[allow(dead_code)]
+    config_file: String
 }
 
 impl Taskmaster
 {
+pub fn start(&self)
+{
+    self.processes.taskmaster_processes.values()
+        .filter(|val| val.exec_on_startup == true)
+        .for_each(|val| val.exec());
+}
+
 pub fn new(config_file: &String) -> Taskmaster
 {
     let mut default = Taskmaster
@@ -77,11 +56,35 @@ pub fn new(config_file: &String) -> Taskmaster
             return default;
         }
     };
-    for (key, proc) in &default.processes.taskmaster_processes
-    {
-        println!("process: {}{}:\n{:?}", key, proc.name, proc);
-    }
-    println!("{:?}", default.processes);
     return default;
+}
+
+pub fn display_config(&self) -> String
+{
+    let mut result = String::new();
+    for (key, val) in &self.processes.taskmaster_processes
+    {
+        let formatted = format!("{}: {} [{:?}]\n", key, val.full_path, val.start_command);
+        result.push_str(&formatted);
+    }
+    result
+}
+}
+
+#[derive(Deserialize, Debug)]
+struct Processes
+{
+    #[serde(rename = "taskmaster-processes")]
+    taskmaster_processes: HashMap<String, Process>
+}
+
+impl Default for Processes
+{
+fn default() -> Self
+{
+    Processes 
+    {
+        taskmaster_processes: HashMap::new(),
+    }
 }
 }

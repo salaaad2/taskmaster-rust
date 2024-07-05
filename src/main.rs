@@ -1,5 +1,6 @@
 use clap::Parser;
 mod taskmaster;
+mod process;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -20,5 +21,12 @@ fn main()
 
     println!("config_file: {}!", args.config_file);
 
-    let _taskmaster = taskmaster::Taskmaster::new(&args.config_file);
+    let taskmaster = taskmaster::Taskmaster::new(&args.config_file);
+
+    if taskmaster.is_ok == false
+    {
+        panic!("");
+    }
+    println!("{}", taskmaster.display_config());
+    taskmaster.start();
 }
