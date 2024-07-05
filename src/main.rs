@@ -1,4 +1,5 @@
 use clap::Parser;
+mod taskmaster;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -13,8 +14,11 @@ struct Args
     // log_file: String,
 }
 
-fn main() {
+fn main() 
+{
     let args = Args::parse();
 
     println!("config_file: {}!", args.config_file);
+
+    let _taskmaster = taskmaster::Taskmaster::new(&args.config_file);
 }
