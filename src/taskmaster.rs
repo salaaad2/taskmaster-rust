@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::{self, fs};
 
 use serde_yml;
-use serde::{Deserialize};
+use serde::Deserialize;
 
 pub struct Taskmaster
 {
@@ -18,12 +18,15 @@ struct Processes
     taskmaster_processes: HashMap<String, Process>
 }
 
-impl Default for Processes {
-    fn default() -> Self {
-        Processes {
-            taskmaster_processes: HashMap::new(),
-        }
+impl Default for Processes
+{
+fn default() -> Self
+{
+    Processes 
+    {
+        taskmaster_processes: HashMap::new(),
     }
+}
 }
 
 #[derive(Deserialize, Debug)]
@@ -42,36 +45,43 @@ struct Process
 
 impl Taskmaster
 {
-    pub fn new(config_file: &String) -> Taskmaster
+pub fn new(config_file: &String) -> Taskmaster
+{
+    let mut default = Taskmaster
     {
-        let mut default = Taskmaster
+        processes: Processes::default(),
+        config_file: "".to_string(),
+        is_ok: true
+    };
+
+    let yaml_content_result =
+        fs::read_to_string(config_file);
+    let yaml_content = match yaml_content_result
+    {
+        Ok(content) => { default.is_ok = true; content }
+        Err(e) =>
         {
-            processes: Processes::default(),
-            config_file: "".to_string(),
-            is_ok: true
-        };
-        if !config_file.ends_with(".yaml")
-        {
-            return Taskmaster
-            {
-                is_ok: false,
-                ..default
-            };
+            eprintln!("File does not exist or is malformed. Aborting. {e}");
+            return Taskmaster{is_ok: false, ..default};
         }
+    };
 
-        let yaml_content_result = fs::read_to_string(config_file);
-        let yaml_content = match yaml_content_result
+    let config = 
+        serde_yml::from_str::<Processes>(&yaml_content);
+    default.processes = match config
+    {
+        Ok(content) => content,
+        Err(e) =>
         {
-            Ok(content) =>{ default.is_ok = true; content }
-            Err(e) =>
-            {
-                eprintln!("File does not exist or is malformed. Aborting. {e}");
-                return Taskmaster{is_ok: false, ..default};
-            }
-        };
-
-        let config = serde_yml::from_str::<Processes>(&yaml_content);
-        println!("{:?}", config);
-        return default;
+            eprintln!("Error parsing yaml file. aborting. {e}.");
+            return default;
+        }
+    };
+    for (key, proc) in &default.processes.taskmaster_processes
+    {
+        println!("process: {}{}:\n{:?}", key, proc.name, proc);
     }
+    println!("{:?}", default.processes);
+    return default;
+}
 }
