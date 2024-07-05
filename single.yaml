@@ -1,0 +1,14 @@
+supervisor-processes:
+  # basic ls output with no redirect
+  basic:
+    name: "ls"
+    full_path: "/bin/cat"
+    start_command: []
+    expected_return: 
+      - 0
+      - 1
+    redirect_streams: false
+    output_redirect_path: ""
+    should_restart: 1
+    number_of_restarts: 1
+    exec_on_startup: true
