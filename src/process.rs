@@ -1,4 +1,5 @@
 use serde::Deserialize;
+use std::cell::RefCell;
 
 use std::process::{Command, Stdio};
 use std::io::Read;
@@ -10,7 +11,7 @@ pub struct Process
     pub start_command: Vec<String>,
     pub exec_on_startup: bool,
     #[serde(skip)]
-    is_alive: bool,
+    is_alive: RefCell<bool>,
     #[allow(dead_code)]
     pub name: String,
     #[allow(dead_code)]
@@ -20,7 +21,7 @@ pub struct Process
     #[allow(dead_code)]
     pub output_redirect_path: String,
     #[allow(dead_code)]
-    pub should_restart: i32,
+    pub should_restart: bool,
     #[allow(dead_code)]
     pub number_of_restarts: i32,
 }
@@ -30,7 +31,7 @@ impl Process
 pub fn exec(&self)
 {
     let mut command = Command::new(&self.full_path)
-        .arg(self.start_command.join(" "))
+        .args(&self.start_command)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .spawn()
@@ -48,28 +49,29 @@ pub fn exec(&self)
                 command.stdout.as_mut().unwrap().read_to_string(&mut output_data).unwrap();
                 println!("{}: returned successfully with exit code: {}\nstdout:\n---\n{}\n---", 
                     self.name, code, output_data);
-                self.is_alive = false;
             }
             else
             {
-                self.is_alive = false;
+                self.set_is_alive(false);
                 panic!("PANIC AT THE DISCO");
             }
         }
         None =>
         {
-            panic!("{}: terminated unexpectedly with unknowned exit code", self.name);
+            self.set_is_alive(false);
+            panic!("{}: terminated unexpectedly with unknown exit code", self.name);
         }
     };
     println!("{}", status)
 }
 
-pub fn set_is_alive(&mut self, new_value: bool)
+pub fn set_is_alive(&self, new_value: bool)
 {
-    self.is_alive = new_value;
+    *self.is_alive.borrow_mut() = new_value;
 }
+
 pub fn is_alive(&self) -> bool
 {
-    return self.is_alive
+    return *self.is_alive.borrow();
 }
 }

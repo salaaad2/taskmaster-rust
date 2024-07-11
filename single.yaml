@@ -3,13 +3,13 @@ taskmaster-processes:
   basic:
     name: "cat"
     full_path: "/bin/exa"
-    start_command: ["."]
+    start_command: ["-l", "."]
     expected_return: 
       - 0
       - 1
     redirect_streams: false
     output_redirect_path: ""
-    should_restart: 1
+    should_restart: true
     number_of_restarts: 1
     exec_on_startup: true
 
